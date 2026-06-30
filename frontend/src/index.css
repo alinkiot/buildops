@@ -45,6 +45,36 @@ body {
   background: rgba(100, 116, 139, 0.5);
 }
 
+/* ---------- 多页签标签栏 ---------- */
+.layout-tabs {
+  background: #fff;
+  padding: 6px 20px 0;
+  border-bottom: 1px solid #eef2f7;
+  position: sticky;
+  top: 64px;
+  z-index: 9;
+}
+.layout-tabs .ant-tabs {
+  margin-bottom: 0;
+}
+.layout-tabs .ant-tabs-nav {
+  margin: 0;
+}
+.layout-tabs .ant-tabs-tab {
+  border-radius: 6px 6px 0 0 !important;
+  padding: 5px 14px !important;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+.layout-tabs .ant-tabs-tab-active {
+  background: #f0f7ff !important;
+  border-bottom-color: #fff !important;
+}
+.layout-tabs .ant-tabs-tab-remove {
+  margin-left: 4px;
+  font-size: 10px;
+}
+
 /* ---------- 内容区进入动效 ---------- */
 @keyframes kiroFadeUp {
   from {

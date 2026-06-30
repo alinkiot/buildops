@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
-import { Layout, Menu, Avatar, Dropdown, Breadcrumb, Tooltip } from 'antd'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Layout, Menu, Avatar, Dropdown, Breadcrumb, Tooltip, Tabs } from 'antd'
 import {
   DashboardOutlined,
   ProjectOutlined,
@@ -39,8 +39,18 @@ const MENU = [
   { key: '/system', icon: <SettingOutlined />, label: '系统设置', perm: 'system' },
 ]
 
+interface TabItem {
+  key: string
+  label: string
+  closable: boolean
+}
+
+// 默认首页标签不可关闭
+const HOME_TAB: TabItem = { key: '/dashboard', label: '工作台', closable: false }
+
 export default function MainLayout() {
   const [collapsed, setCollapsed] = useState(false)
+  const [tabs, setTabs] = useState<TabItem[]>([HOME_TAB])
   const navigate = useNavigate()
   const location = useLocation()
   const { user, logout, has } = useAuth()
@@ -52,6 +62,43 @@ export default function MainLayout() {
   )
 
   const current = MENU.find((m) => m.key === location.pathname)
+
+  // 路由变化时自动添加标签
+  useEffect(() => {
+    const path = location.pathname
+    const menu = MENU.find((m) => m.key === path)
+    if (!menu) return
+    setTabs((prev) => {
+      if (prev.some((t) => t.key === path)) return prev
+      return [...prev, { key: path, label: menu.label, closable: path !== '/dashboard' }]
+    })
+  }, [location.pathname])
+
+  // 切换标签
+  const onTabChange = useCallback(
+    (key: string) => {
+      navigate(key)
+    },
+    [navigate],
+  )
+
+  // 关闭标签
+  const onTabEdit = useCallback(
+    (targetKey: unknown, action: 'add' | 'remove') => {
+      if (action !== 'remove' || typeof targetKey !== 'string') return
+      setTabs((prev) => {
+        const idx = prev.findIndex((t) => t.key === targetKey)
+        const newTabs = prev.filter((t) => t.key !== targetKey)
+        // 如果关闭的是当前激活标签，跳到相邻标签
+        if (targetKey === location.pathname) {
+          const next = newTabs[Math.min(idx, newTabs.length - 1)]
+          if (next) navigate(next.key)
+        }
+        return newTabs
+      })
+    },
+    [location.pathname, navigate],
+  )
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
@@ -147,6 +194,18 @@ export default function MainLayout() {
             </span>
           </Dropdown>
         </Header>
+        {/* 多页签标签栏 */}
+        <div className="layout-tabs">
+          <Tabs
+            type="editable-card"
+            hideAdd
+            activeKey={location.pathname}
+            onChange={onTabChange}
+            onEdit={onTabEdit}
+            size="small"
+            items={tabs.map((t) => ({ key: t.key, label: t.label, closable: t.closable }))}
+          />
+        </div>
         <Content style={{ margin: 20 }}>
           <div
             className="app-content-enter"
@@ -155,7 +214,7 @@ export default function MainLayout() {
               background: '#fff',
               borderRadius: 14,
               padding: 24,
-              minHeight: 'calc(100vh - 64px - 40px)',
+              minHeight: 'calc(100vh - 64px - 48px - 40px)',
               boxShadow: '0 1px 2px rgba(15,23,42,0.04), 0 6px 20px rgba(15,23,42,0.05)',
             }}
           >
