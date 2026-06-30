@@ -2,10 +2,10 @@
 
 # ============================================================
 # BuildOps · 施工企业全流程智能托管平台
-# 运行镜像：流水线已编译好前端 dist/，此处只打包后端 + 静态资源。
+# 纯后端镜像：前端静态资源由部署时挂载到 /app/static 目录提供。
 #
-# 构建前提：项目根目录下已存在 frontend/dist/（流水线 npm run build 产出）
-# 构建命令：docker build -t buildops:latest .
+# 构建：docker build -t buildops:latest .
+# 运行：docker run -d -p 8000:8000 -v /path/to/dist:/app/static -v data:/data buildops:latest
 # ============================================================
 FROM python:3.11-slim
 
@@ -22,15 +22,15 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Python 依赖（层缓存）
+# Python 依赖
 COPY backend/requirements.txt ./requirements.txt
 RUN pip install -r requirements.txt
 
 # 后端源码
 COPY backend/app ./app
 
-# 前端编译产物（流水线已通过 npm run build 生成 frontend/dist/）
-COPY frontend/dist ./static
+# 预创建 static 目录（部署时挂载前端产物到此目录）
+RUN mkdir -p ./static
 
 # 入口脚本
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh

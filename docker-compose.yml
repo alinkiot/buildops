@@ -9,6 +9,8 @@ services:
       APP_SECRET_KEY: "please-change-this-to-a-long-random-secret"
     volumes:
       - app-data:/data
+      # 前端编译产物挂载（部署时指定实际路径）
+      - ./dist:/app/static:ro
     restart: unless-stopped
 
 volumes:
