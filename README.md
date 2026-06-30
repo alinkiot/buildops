@@ -104,26 +104,6 @@ npm run dev                   # http://localhost:5173 ，已配置 /api 代理�
 | boss  | boss123  | 企业老板 | 只读全局菜单 |
 | pm    | pm123    | 项目负责人 | 项目 / 资料 / 文件 / 预警维护 |
 
-## API 概览（前缀 `/api`）
-
-| 模块 | 主要接口 |
-|------|----------|
-| 认证 | `POST /auth/login`、`GET /auth/me` |
-| 系统设置 | `GET/POST /system/departments`、`/system/users`、`/system/roles`、`GET /system/permissions`、`GET /system/audit-logs`、`POST /system/users/{id}/reset-password`、`GET/PUT /system/users/{id}/projects`（项目授权） |
-| 项目中心 | `GET/POST/PUT/DELETE /projects`、`GET/POST /projects/clients` |
-| 招投标 | `GET/POST/PUT/DELETE /tenders`、`GET /tenders/board`、`POST /tenders/{id}/evaluate`、`POST /tenders/scan-deposit` |
-| 资质合规 | `GET/POST/PUT/DELETE /qualifications`、`POST /qualifications/{id}/verify`、`POST /qualifications/scan` |
-| 工程资料 | `GET/POST/PUT/DELETE /documents`、`/documents/templates`、`POST /documents/apply-template`、`/{id}/upload`、`/{id}/review`、`/scan`、`/completeness`、`/archive` |
-| 成本管理 | `GET/POST/PUT/DELETE /costs/budgets`、`GET/POST /costs/expenses`、`POST /costs/expenses/{id}/approve`、`GET /costs/summary` |
-| 财税账本 | `GET/POST/PUT/DELETE /finance`、`POST /finance/scan`、`GET /finance/profit` |
-| 回款清欠 | `GET/POST/PUT/DELETE /receivables`、`GET /receivables/summary`、`POST /receivables/scan`、`/{id}/logs`、`/{id}/payment`、`/{id}/letter` |
-| 劳务法务 | `GET/POST/PUT/DELETE /labor/workers`、`GET /labor/summary`、`POST /labor/scan`、`/workers/{id}/payroll` |
-| 文件中心 | `GET /files`、`POST /files/upload`、`GET /files/{id}/download`、`PUT/DELETE /files/{id}` |
-| 预警中心 | `GET/POST/PUT /alerts/rules`、`GET/POST /alerts`、`POST /alerts/{id}/handle` |
-| 驾驶舱 | `GET /dashboard` |
-| 数据导出 | `GET /export/{projects,receivables,alerts}` |
-| 第三方集成 | `GET /integrations/providers`、`POST /integrations/{sms,esign,ocr}`、`GET /integrations/logs` |
-
 ## 安全说明
 
 - JWT 鉴权，角色权限 + 按项目数据范围双重管控。
