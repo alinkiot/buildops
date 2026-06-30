@@ -1,31 +1,15 @@
 services:
   app:
-    build:
-      context: .
-      args:
-        # 切换前端 release tag / 资产名
-        FRONTEND_RELEASE_TAG: ${FRONTEND_RELEASE_TAG:-0.0.1}
-        FRONTEND_ASSET_NAME: ${FRONTEND_ASSET_NAME:-dist.tar.gz}
-      secrets:
-        - gh_token
+    build: .
     image: buildops:latest
     container_name: buildops
     ports:
       - "8000:8000"
     environment:
-      # 生产请务必替换为强随机值
       APP_SECRET_KEY: "please-change-this-to-a-long-random-secret"
-      # 默认 SQLite 落盘到 /data 卷；如需 PostgreSQL/MySQL 改这里（并在镜像内安装对应驱动）
-      # APP_DATABASE_URL: "postgresql+psycopg://user:pwd@db:5432/cmvp"
     volumes:
       - app-data:/data
     restart: unless-stopped
-
-# 构建私有 release 下载所需的 GitHub Token（从环境变量 GH_TOKEN 读取）
-# 需要 Docker Compose 2.20+；构建：GH_TOKEN=<PAT> docker compose build
-secrets:
-  gh_token:
-    environment: GH_TOKEN
 
 volumes:
   app-data:
