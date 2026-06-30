@@ -129,6 +129,34 @@ body {
   height: 100%;
 }
 
+/* 模块卡片 hover 显示详情按钮 */
+.module-card.ant-card {
+  display: flex;
+  flex-direction: column;
+}
+.module-card .ant-card-head {
+  flex: none;
+}
+.module-card .ant-card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.module-card .card-detail-btn {
+  display: block;
+  margin-top: auto;
+  margin-left: auto;
+  margin-right: 0;
+  width: fit-content;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+}
+.module-card:hover .card-detail-btn {
+  opacity: 1;
+  pointer-events: auto;
+}
+
 /* ---------- 表格细节 ---------- */
 .ant-table-wrapper .ant-table-thead > tr > th {
   font-weight: 600 !important;
