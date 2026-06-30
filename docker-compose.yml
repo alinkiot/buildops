@@ -1,8 +1,15 @@
 services:
   app:
-    build: .
-    image: construction-mvp:latest
-    container_name: construction-mvp
+    build:
+      context: .
+      args:
+        # 切换前端 release tag / 资产名
+        FRONTEND_RELEASE_TAG: ${FRONTEND_RELEASE_TAG:-0.0.1}
+        FRONTEND_ASSET_NAME: ${FRONTEND_ASSET_NAME:-dist.tar.gz}
+      secrets:
+        - gh_token
+    image: buildops:latest
+    container_name: buildops
     ports:
       - "8000:8000"
     environment:
@@ -13,6 +20,12 @@ services:
     volumes:
       - app-data:/data
     restart: unless-stopped
+
+# 构建私有 release 下载所需的 GitHub Token（从环境变量 GH_TOKEN 读取）
+# 需要 Docker Compose 2.20+；构建：GH_TOKEN=<PAT> docker compose build
+secrets:
+  gh_token:
+    environment: GH_TOKEN
 
 volumes:
   app-data:

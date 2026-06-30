@@ -60,10 +60,17 @@ docs/            设计文档（PRD / 详细需求 / MVP 范围 / 页面原型�
 ## Docker 运行（推荐）
 
 ```bash
-docker compose up -d --build
+# 前端产物从私有仓库 Release 下载，构建需提供 GitHub Token（仅构建期使用，不写入镜像）
+export GH_TOKEN=<具备 Contents:read 权限的 PAT>
+DOCKER_BUILDKIT=1 docker compose up -d --build
 ```
 
-单镜像同时提供前端页面与 `/api` 接口，访问 http://localhost:8000 ；数据库与上传文件持久化到 `/data` 卷。生产部署请通过环境变量 `APP_SECRET_KEY` 注入强随机密钥。
+镜像在构建时通过 GitHub API 下载指定 tag 的前端产物（默认 `0.0.1` 的 `dist.tar.gz`），与后端打进同一镜像。运行后单镜像同时提供前端页面与 `/api` 接口，访问 http://localhost:8000 ；数据库与上传文件持久化到 `/data` 卷。
+
+- 切换前端版本：`FRONTEND_RELEASE_TAG=0.1.0 GH_TOKEN=... docker compose build`
+- 纯 docker 构建：`GH_TOKEN=... DOCKER_BUILDKIT=1 docker build --secret id=gh_token,env=GH_TOKEN --build-arg FRONTEND_RELEASE_TAG=0.0.1 -t buildops:0.0.1 .`
+
+生产部署请通过环境变量 `APP_SECRET_KEY` 注入强随机密钥。
 
 ## 本地启动
 
