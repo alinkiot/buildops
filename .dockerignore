@@ -1,0 +1,25 @@
+# Python
+**/__pycache__/
+**/*.pyc
+backend/.venv/
+backend/.pytest_cache/
+backend/tests/
+# 本地 SQLite 库与上传（容器内使用 /data 卷）
+backend/construction_mvp.db
+backend/uploads/
+*.db
+
+# Node / 前端
+frontend/node_modules/
+frontend/dist/
+
+# 版本控制与杂项
+.git/
+.gitignore
+**/.DS_Store
+*.log
+.env
+**/.env
+
+# 文档
+*.md

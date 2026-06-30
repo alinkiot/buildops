@@ -1,0 +1,18 @@
+services:
+  app:
+    build: .
+    image: construction-mvp:latest
+    container_name: construction-mvp
+    ports:
+      - "8000:8000"
+    environment:
+      # 生产请务必替换为强随机值
+      APP_SECRET_KEY: "please-change-this-to-a-long-random-secret"
+      # 默认 SQLite 落盘到 /data 卷；如需 PostgreSQL/MySQL 改这里（并在镜像内安装对应驱动）
+      # APP_DATABASE_URL: "postgresql+psycopg://user:pwd@db:5432/cmvp"
+    volumes:
+      - app-data:/data
+    restart: unless-stopped
+
+volumes:
+  app-data:

@@ -1,0 +1,218 @@
+/* ============================================================
+   全局样式 —— 施工企业运营托管数字化系统
+   背景质感 / 滚动条 / 卡片与表格细节 / 动效 / 品牌工具类
+   ============================================================ */
+
+:root {
+  --brand-primary: #1668dc;
+  --brand-deep: #0b3d91;
+  --brand-cyan: #13c2c2;
+  --brand-gradient: linear-gradient(135deg, #1668dc 0%, #0b3d91 100%);
+  --page-bg: #f4f6fb;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--page-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* ---------- 自定义滚动条 ---------- */
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.28);
+  border-radius: 8px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.5);
+}
+
+/* ---------- 内容区进入动效 ---------- */
+@keyframes kiroFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.app-content-enter {
+  animation: kiroFadeUp 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ---------- 卡片质感与悬浮 ---------- */
+.ant-card {
+  transition: box-shadow 0.25s ease, transform 0.25s ease,
+    border-color 0.25s ease;
+}
+.ant-card-hoverable:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px -12px rgba(15, 23, 42, 0.22) !important;
+}
+
+/* 统计 KPI 卡片渐变质感 */
+.kpi-card {
+  position: relative;
+  overflow: hidden;
+  border: none !important;
+  color: #fff;
+}
+.kpi-card .ant-card-body {
+  position: relative;
+  z-index: 1;
+}
+.kpi-card::after {
+  content: '';
+  position: absolute;
+  right: -28px;
+  top: -28px;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+}
+.kpi-card .kpi-icon {
+  position: absolute;
+  right: 16px;
+  bottom: 12px;
+  font-size: 46px;
+  opacity: 0.18;
+  z-index: 0;
+}
+.kpi-card .kpi-title {
+  font-size: 13px;
+  opacity: 0.92;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.kpi-card .kpi-value {
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.2px;
+}
+.kpi-card .kpi-suffix {
+  font-size: 13px;
+  font-weight: 400;
+  opacity: 0.85;
+  margin-left: 4px;
+}
+
+/* ---------- 等高卡片网格（模块概览） ---------- */
+.eq-grid > .ant-col {
+  display: flex;
+}
+.eq-grid > .ant-col > .ant-card {
+  width: 100%;
+  height: 100%;
+}
+
+/* ---------- 表格细节 ---------- */
+.ant-table-wrapper .ant-table-thead > tr > th {
+  font-weight: 600 !important;
+  letter-spacing: 0.2px;
+}
+
+/* 操作列（右固定列）内容始终单行显示，不换行 */
+.ant-table-cell-fix-right {
+  white-space: nowrap;
+}
+.ant-table-cell-fix-right .ant-space {
+  flex-wrap: nowrap;
+}
+
+/* ---------- 页面标题区 ---------- */
+.page-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 17px;
+  font-weight: 600;
+  color: #0f172a;
+}
+.page-title::before {
+  content: '';
+  width: 4px;
+  height: 17px;
+  border-radius: 3px;
+  background: var(--brand-gradient);
+}
+
+/* ---------- 品牌渐变文字 ---------- */
+.brand-gradient-text {
+  background: linear-gradient(120deg, #ffffff 0%, #cfe3ff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ---------- 侧边栏头部 / Logo ---------- */
+.sider-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 64px;
+  padding: 0 18px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.sider-brand .logo-mark {
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--brand-gradient);
+  box-shadow: 0 4px 12px rgba(22, 104, 220, 0.45);
+  color: #fff;
+  font-size: 20px;
+}
+.sider-brand .logo-text {
+  color: #fff;
+  font-weight: 700;
+  font-size: 16px;
+  white-space: nowrap;
+  line-height: 1.15;
+}
+.sider-brand .logo-sub {
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 11px;
+  letter-spacing: 1px;
+}
+
+/* 菜单滚动区 */
+.sider-menu {
+  height: calc(100vh - 64px - 48px - 8px);
+  overflow-y: auto;
+  padding-top: 6px;
+}
+.sider-menu .ant-menu-item {
+  transition: all 0.2s ease;
+}
+.sider-menu .ant-menu-item-selected {
+  box-shadow: 0 4px 12px rgba(22, 104, 220, 0.4);
+}
