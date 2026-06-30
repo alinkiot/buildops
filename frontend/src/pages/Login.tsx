@@ -29,10 +29,6 @@ export default function Login() {
     }
   }
 
-  const quickFill = (username: string, password: string) => {
-    form.setFieldsValue({ username, password })
-  }
-
   return (
     <div style={{ minHeight: '100vh', display: 'flex', background: '#0b1f3a' }}>
       {/* 左侧品牌区 */}
@@ -134,7 +130,6 @@ export default function Login() {
           <Typography.Title level={3} style={{ marginBottom: 6 }}>
             欢迎登录
           </Typography.Title>
-          <Typography.Text type="secondary">请输入账号信息以进入运营托管系统</Typography.Text>
         </div>
 
         <Form
@@ -142,7 +137,7 @@ export default function Login() {
           onFinish={onFinish}
           size="large"
           layout="vertical"
-          initialValues={{ username: 'admin', password: 'admin123' }}
+          initialValues={{ username: '', password: '' }}
         >
           <Form.Item name="username" label="用户名" rules={[{ required: true, message: '请输入用户名' }]}>
             <Input prefix={<UserOutlined style={{ color: '#94a3b8' }} />} placeholder="请输入用户名" />
@@ -162,34 +157,6 @@ export default function Login() {
             </Button>
           </Form.Item>
         </Form>
-
-        <div style={{ marginTop: 8 }}>
-          <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 10 }}>演示账号（点击快速填充）</div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-            {[
-              { u: 'admin', p: 'admin123', t: '超管' },
-              { u: 'boss', p: 'boss123', t: '老板' },
-              { u: 'pm', p: 'pm123', t: '项目负责人' },
-            ].map((a) => (
-              <span
-                key={a.u}
-                onClick={() => quickFill(a.u, a.p)}
-                style={{
-                  cursor: 'pointer',
-                  fontSize: 12,
-                  padding: '5px 12px',
-                  borderRadius: 8,
-                  border: '1px solid #e5eaf2',
-                  color: '#475569',
-                  background: '#f8fafc',
-                  transition: 'all .2s',
-                }}
-              >
-                {a.t} · {a.u}
-              </span>
-            ))}
-          </div>
-        </div>
 
         <div style={{ marginTop: 40, fontSize: 12, color: '#cbd5e1', textAlign: 'center' }}>
           © {new Date().getFullYear()} 施工企业运营托管数字化系统
