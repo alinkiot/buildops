@@ -73,6 +73,23 @@ body {
 .layout-tabs .ant-tabs-tab-remove {
   margin-left: 4px;
   font-size: 10px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.layout-tabs .ant-tabs-tab:hover .ant-tabs-tab-remove {
+  opacity: 1;
+}
+
+/* ---------- Tab 右键菜单 ---------- */
+.tab-context-menu-list .ant-menu-item {
+  height: 32px;
+  line-height: 32px;
+  margin: 0 !important;
+  padding: 0 10px !important;
+  font-size: 13px;
+}
+.tab-context-menu-list .ant-menu-item-divider {
+  margin: 4px 0 !important;
 }
 
 /* ---------- 内容区进入动效 ---------- */

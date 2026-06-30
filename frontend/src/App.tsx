@@ -14,7 +14,9 @@ import Costs from './pages/Costs'
 import Finance from './pages/Finance'
 import Receivables from './pages/Receivables'
 import Labor from './pages/Labor'
-import System from './pages/System'
+import SystemUsers from './pages/SystemUsers'
+import SystemIntegrations from './pages/SystemIntegrations'
+import SystemAudit from './pages/SystemAudit'
 
 function RequireAuth({ children }: { children: JSX.Element }) {
   const { user, loading } = useAuth()
@@ -48,7 +50,10 @@ export default function App() {
           <Route path="tenders" element={<Tenders />} />
           <Route path="files" element={<Files />} />
           <Route path="alerts" element={<Alerts />} />
-          <Route path="system" element={<System />} />
+          <Route path="system" element={<Navigate to="/system/users" replace />} />
+          <Route path="system/users" element={<SystemUsers />} />
+          <Route path="system/integrations" element={<SystemIntegrations />} />
+          <Route path="system/audit" element={<SystemAudit />} />
           <Route path="qualifications" element={<Qualifications />} />
           <Route path="documents" element={<Documents />} />
           <Route path="costs" element={<Costs />} />

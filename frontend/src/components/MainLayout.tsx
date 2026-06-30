@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Layout, Menu, Avatar, Dropdown, Breadcrumb, Tooltip, Tabs } from 'antd'
+import type { MenuProps } from 'antd'
 import {
   DashboardOutlined,
   ProjectOutlined,
@@ -17,6 +18,12 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   HomeOutlined,
+  ReloadOutlined,
+  CloseOutlined,
+  VerticalLeftOutlined,
+  VerticalRightOutlined,
+  ApiOutlined,
+  AuditOutlined,
 } from '@ant-design/icons'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
@@ -24,7 +31,15 @@ import { brand } from '../theme'
 
 const { Header, Sider, Content } = Layout
 
-const MENU = [
+interface MenuItem {
+  key: string
+  icon: React.ReactNode
+  label: string
+  perm: string
+  children?: { key: string; icon: React.ReactNode; label: string }[]
+}
+
+const MENU: MenuItem[] = [
   { key: '/dashboard', icon: <DashboardOutlined />, label: '工作台', perm: 'dashboard' },
   { key: '/projects', icon: <ProjectOutlined />, label: '项目中心', perm: 'project' },
   { key: '/tenders', icon: <SolutionOutlined />, label: '招投标', perm: 'tender' },
@@ -36,7 +51,14 @@ const MENU = [
   { key: '/labor', icon: <TeamOutlined />, label: '劳务法务', perm: 'labor' },
   { key: '/files', icon: <FolderOpenOutlined />, label: '文件中心', perm: 'file' },
   { key: '/alerts', icon: <AlertOutlined />, label: '预警中心', perm: 'alert' },
-  { key: '/system', icon: <SettingOutlined />, label: '系统设置', perm: 'system' },
+  {
+    key: '/system', icon: <SettingOutlined />, label: '系统设置', perm: 'system',
+    children: [
+      { key: '/system/users', icon: <UserOutlined />, label: '用户中心' },
+      { key: '/system/integrations', icon: <ApiOutlined />, label: '第三方集成' },
+      { key: '/system/audit', icon: <AuditOutlined />, label: '操作日志' },
+    ],
+  },
 ]
 
 interface TabItem {
@@ -57,22 +79,40 @@ export default function MainLayout() {
 
   const items = useMemo(
     () =>
-      MENU.filter((m) => has(m.perm)).map((m) => ({ key: m.key, icon: m.icon, label: m.label })),
+      MENU.filter((m) => has(m.perm)).map((m) => ({
+        key: m.key,
+        icon: m.icon,
+        label: m.label,
+        children: m.children?.map((c) => ({ key: c.key, icon: c.icon, label: c.label })),
+      })),
     [user],
   )
 
-  const current = MENU.find((m) => m.key === location.pathname)
+  // 扁平化菜单用于查找当前路由对应的菜单项
+  const flatMenu = useMemo(() => {
+    const list: { key: string; label: string }[] = []
+    MENU.forEach((m) => {
+      if (m.children) {
+        m.children.forEach((c) => list.push({ key: c.key, label: c.label }))
+      } else {
+        list.push({ key: m.key, label: m.label })
+      }
+    })
+    return list
+  }, [])
+
+  const current = flatMenu.find((m) => m.key === location.pathname)
 
   // 路由变化时自动添加标签
   useEffect(() => {
     const path = location.pathname
-    const menu = MENU.find((m) => m.key === path)
+    const menu = flatMenu.find((m) => m.key === path)
     if (!menu) return
     setTabs((prev) => {
       if (prev.some((t) => t.key === path)) return prev
       return [...prev, { key: path, label: menu.label, closable: path !== '/dashboard' }]
     })
-  }, [location.pathname])
+  }, [location.pathname, flatMenu])
 
   // 切换标签
   const onTabChange = useCallback(
@@ -99,6 +139,117 @@ export default function MainLayout() {
     },
     [location.pathname, navigate],
   )
+
+  // ===== 右键菜单 =====
+  const [contextMenu, setContextMenu] = useState<{ tabKey: string; x: number; y: number } | null>(null)
+
+  // 点击任意位置关闭菜单
+  useEffect(() => {
+    if (!contextMenu) return
+    const hide = (e: MouseEvent) => {
+      // 如果点击在右键菜单内部则不关闭（由菜单 onClick 自行关闭）
+      const target = e.target as HTMLElement
+      if (target.closest('.tab-context-menu')) return
+      setContextMenu(null)
+    }
+    // 延迟绑定，避免当前这次右键事件冒泡立即触发关闭
+    const timer = setTimeout(() => {
+      document.addEventListener('mousedown', hide)
+      document.addEventListener('contextmenu', hide)
+    }, 0)
+    return () => {
+      clearTimeout(timer)
+      document.removeEventListener('mousedown', hide)
+      document.removeEventListener('contextmenu', hide)
+    }
+  }, [contextMenu])
+
+  const contextMenuItems: MenuProps['items'] = useMemo(() => {
+    if (!contextMenu) return []
+    const idx = tabs.findIndex((t) => t.key === contextMenu.tabKey)
+    return [
+      { key: 'refresh', icon: <ReloadOutlined />, label: '刷新页面' },
+      { type: 'divider' as const },
+      {
+        key: 'closeOthers',
+        icon: <CloseOutlined />,
+        label: '关闭其它',
+        disabled: tabs.filter((t) => t.closable && t.key !== contextMenu.tabKey).length === 0,
+      },
+      {
+        key: 'closeLeft',
+        icon: <VerticalRightOutlined />,
+        label: '关闭左侧',
+        disabled: tabs.slice(0, idx).filter((t) => t.closable).length === 0,
+      },
+      {
+        key: 'closeRight',
+        icon: <VerticalLeftOutlined />,
+        label: '关闭右侧',
+        disabled: tabs.slice(idx + 1).filter((t) => t.closable).length === 0,
+      },
+    ]
+  }, [contextMenu, tabs])
+
+  const onContextMenuAction = useCallback(
+    ({ key }: { key: string }) => {
+      if (!contextMenu) return
+      const targetKey = contextMenu.tabKey
+      const idx = tabs.findIndex((t) => t.key === targetKey)
+
+      if (key === 'refresh') {
+        // 通过先导航到一个空路径再回来实现刷新
+        navigate(targetKey, { replace: true })
+        // 使用 key 机制强制 remount
+        window.location.reload()
+      } else if (key === 'closeOthers') {
+        const kept = tabs.filter((t) => !t.closable || t.key === targetKey)
+        setTabs(kept)
+        if (!kept.some((t) => t.key === location.pathname)) {
+          navigate(targetKey)
+        }
+      } else if (key === 'closeLeft') {
+        const leftKeys = tabs.slice(0, idx).filter((t) => t.closable).map((t) => t.key)
+        const kept = tabs.filter((t) => !leftKeys.includes(t.key))
+        setTabs(kept)
+        if (leftKeys.includes(location.pathname)) {
+          navigate(targetKey)
+        }
+      } else if (key === 'closeRight') {
+        const rightKeys = tabs.slice(idx + 1).filter((t) => t.closable).map((t) => t.key)
+        const kept = tabs.filter((t) => !rightKeys.includes(t.key))
+        setTabs(kept)
+        if (rightKeys.includes(location.pathname)) {
+          navigate(targetKey)
+        }
+      }
+      setContextMenu(null)
+    },
+    [contextMenu, tabs, location.pathname, navigate],
+  )
+
+  // 为 tab 渲染带右键事件的 label — 使用事件委托，绑定在整个 tabs 容器上
+  const tabsRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const container = tabsRef.current
+    if (!container) return
+    const handler = (e: MouseEvent) => {
+      let el = e.target as HTMLElement | null
+      let tabKey: string | null = null
+      while (el && el !== container) {
+        tabKey = el.getAttribute('data-node-key')
+        if (tabKey) break
+        el = el.parentElement
+      }
+      if (!tabKey) return
+      e.preventDefault()
+      e.stopPropagation()
+      setContextMenu({ tabKey, x: e.clientX, y: e.clientY })
+    }
+    container.addEventListener('contextmenu', handler)
+    return () => container.removeEventListener('contextmenu', handler)
+  }, [])
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
@@ -132,6 +283,7 @@ export default function MainLayout() {
             theme="dark"
             mode="inline"
             selectedKeys={[location.pathname]}
+            defaultOpenKeys={['/system']}
             items={items}
             onClick={({ key }) => navigate(key)}
             style={{ background: 'transparent', borderInlineEnd: 'none' }}
@@ -168,7 +320,11 @@ export default function MainLayout() {
           </div>
           <Dropdown
             menu={{
-              items: [{ key: 'logout', icon: <LogoutOutlined />, label: '退出登录', onClick: logout }],
+              items: [
+                { key: 'role', label: <span style={{ fontWeight: 600, color: '#334155', display: 'block', textAlign: 'center' }}>超级管理员</span>, disabled: true },
+                { type: 'divider' },
+                { key: 'logout', icon: <LogoutOutlined />, label: '退出登录', onClick: logout },
+              ],
             }}
           >
             <span
@@ -176,7 +332,6 @@ export default function MainLayout() {
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: 10,
                 padding: '6px 12px',
                 borderRadius: 10,
                 transition: 'background .2s',
@@ -185,17 +340,11 @@ export default function MainLayout() {
               onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
             >
               <Avatar size={32} style={{ background: brand.gradient }} icon={<UserOutlined />} />
-              <span style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.25 }}>
-                <span style={{ fontWeight: 600, fontSize: 13 }}>{user?.name}</span>
-                {user?.roles?.[0] && (
-                  <span style={{ fontSize: 11, color: '#94a3b8' }}>{user.roles[0].name}</span>
-                )}
-              </span>
             </span>
           </Dropdown>
         </Header>
         {/* 多页签标签栏 */}
-        <div className="layout-tabs">
+        <div className="layout-tabs" ref={tabsRef}>
           <Tabs
             type="editable-card"
             hideAdd
@@ -206,6 +355,29 @@ export default function MainLayout() {
             items={tabs.map((t) => ({ key: t.key, label: t.label, closable: t.closable }))}
           />
         </div>
+        {/* 右键菜单 */}
+        {contextMenu && (
+          <div
+            className="tab-context-menu"
+            style={{
+              position: 'fixed',
+              left: contextMenu.x,
+              top: contextMenu.y,
+              zIndex: 1050,
+              boxShadow: '0 6px 16px 0 rgba(0,0,0,0.08), 0 3px 6px -4px rgba(0,0,0,0.12), 0 9px 28px 8px rgba(0,0,0,0.05)',
+              borderRadius: 8,
+              background: '#fff',
+              padding: '4px 0',
+            }}
+          >
+            <Menu
+              items={contextMenuItems}
+              onClick={onContextMenuAction}
+              style={{ border: 'none', boxShadow: 'none', borderRadius: 8, minWidth: 120 }}
+              className="tab-context-menu-list"
+            />
+          </div>
+        )}
         <Content style={{ margin: 20 }}>
           <div
             className="app-content-enter"
