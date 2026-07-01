@@ -32,6 +32,7 @@ from app.models.enums import (
     DocStatus,
     ExpenseStatus,
     ExpenseType,
+    FeedbackStatus,
     FileStatus,
     FinanceDirection,
     FinanceStatus,
@@ -545,3 +546,17 @@ class IntegrationLog(Base):
     operator_id: Mapped[int | None] = mapped_column(Integer)
     operator_name: Mapped[str | None] = mapped_column(String(64))
     created_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc, index=True)
+
+
+# ---------------- 用户反馈 ----------------
+class Feedback(TimestampMixin, Base):
+    """用户反馈/建议。"""
+    __tablename__ = "feedbacks"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    title: Mapped[str] = mapped_column(String(200), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text)
+    page_url: Mapped[str | None] = mapped_column(String(500))
+    status: Mapped[FeedbackStatus] = mapped_column(_enum(FeedbackStatus), default=FeedbackStatus.PENDING)

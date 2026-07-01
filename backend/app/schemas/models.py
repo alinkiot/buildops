@@ -327,6 +327,13 @@ class DashboardData(BaseModel):
     alert_by_level: list[NameValue]
     project_by_status: list[NameValue]
     modules: "ModuleOverview | None" = None
+    # 新增维度
+    receivable_trend: list[dict] = []        # 近6月回款趋势 [{month, planned, actual}]
+    cost_structure: list[NameValue] = []     # 成本结构分布 (按科目)
+    contract_top5: list[dict] = []           # 合同额Top5项目 [{name, contract_amount, received_amount}]
+    overdue_receivables: list[dict] = []     # 逾期回款明细 [{project_name, client_name, amount, overdue_days, level}]
+    pending_alerts: list[dict] = []          # 近期待办预警 [{title, level, source, due_date, status}]
+    labor_team_stats: list[dict] = []        # 劳务分班统计 [{team, count, craft}]
 
 
 # ---------------- 资质合规 ----------------
@@ -1079,3 +1086,29 @@ class IntegrationProviders(BaseModel):
     sms: str
     esign: str
     ocr: str
+
+
+# ---------------- 用户反馈 ----------------
+from app.models.enums import FeedbackStatus  # noqa: E402
+
+
+class FeedbackCreate(BaseModel):
+    title: str
+    description: str | None = None
+    page_url: str | None = None
+
+
+class FeedbackStatusUpdate(BaseModel):
+    status: FeedbackStatus
+
+
+class FeedbackOut(ORMBase):
+    id: int
+    tenant_id: int
+    user_id: int
+    title: str
+    description: str | None = None
+    page_url: str | None = None
+    status: FeedbackStatus
+    created_at: datetime
+    updated_at: datetime

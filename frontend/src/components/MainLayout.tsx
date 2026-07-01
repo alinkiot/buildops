@@ -25,10 +25,12 @@ import {
   ApiOutlined,
   AuditOutlined,
   DesktopOutlined,
+  MessageOutlined,
 } from '@ant-design/icons'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { brand } from '../theme'
+import FeedbackButton from './FeedbackButton'
 
 const { Header, Sider, Content } = Layout
 
@@ -58,6 +60,7 @@ const MENU: MenuItem[] = [
       { key: '/system/users', icon: <UserOutlined />, label: '用户中心' },
       { key: '/system/integrations', icon: <ApiOutlined />, label: '第三方集成' },
       { key: '/system/audit', icon: <AuditOutlined />, label: '操作日志' },
+      { key: '/system/feedback', icon: <MessageOutlined />, label: '意见反馈' },
     ],
   },
 ]
@@ -65,11 +68,12 @@ const MENU: MenuItem[] = [
 interface TabItem {
   key: string
   label: string
+  icon?: React.ReactNode
   closable: boolean
 }
 
 // 默认首页标签不可关闭
-const HOME_TAB: TabItem = { key: '/dashboard', label: '工作台', closable: false }
+const HOME_TAB: TabItem = { key: '/dashboard', label: '工作台', icon: <DashboardOutlined />, closable: false }
 
 export default function MainLayout() {
   const [collapsed, setCollapsed] = useState(false)
@@ -91,12 +95,12 @@ export default function MainLayout() {
 
   // 扁平化菜单用于查找当前路由对应的菜单项
   const flatMenu = useMemo(() => {
-    const list: { key: string; label: string }[] = []
+    const list: { key: string; label: string; icon?: React.ReactNode }[] = []
     MENU.forEach((m) => {
       if (m.children) {
-        m.children.forEach((c) => list.push({ key: c.key, label: c.label }))
+        m.children.forEach((c) => list.push({ key: c.key, label: c.label, icon: c.icon }))
       } else {
-        list.push({ key: m.key, label: m.label })
+        list.push({ key: m.key, label: m.label, icon: m.icon })
       }
     })
     return list
@@ -111,7 +115,7 @@ export default function MainLayout() {
     if (!menu) return
     setTabs((prev) => {
       if (prev.some((t) => t.key === path)) return prev
-      return [...prev, { key: path, label: menu.label, closable: path !== '/dashboard' }]
+      return [...prev, { key: path, label: menu.label, icon: menu.icon, closable: path !== '/dashboard' }]
     })
   }, [location.pathname, flatMenu])
 
@@ -388,7 +392,7 @@ export default function MainLayout() {
             onChange={onTabChange}
             onEdit={onTabEdit}
             size="small"
-            items={tabs.map((t) => ({ key: t.key, label: t.label, closable: t.closable }))}
+            items={tabs.map((t) => ({ key: t.key, label: <span>{t.icon} {t.label}</span>, closable: t.closable }))}
           />
         </div>
         {/* 右键菜单 */}
@@ -430,6 +434,7 @@ export default function MainLayout() {
           </div>
         </Content>
       </Layout>
+      <FeedbackButton />
     </Layout>
   )
 }

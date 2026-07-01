@@ -141,6 +141,12 @@ export interface DashboardData {
   alert_by_level: { name: string; value: number }[]
   project_by_status: { name: string; value: number }[]
   modules?: ModuleOverview | null
+  receivable_trend: Array<{ month: string; planned: number; actual: number }>
+  cost_structure: { name: string; value: number }[]
+  contract_top5: Array<{ name: string; contract_amount: number; received_amount: number }>
+  overdue_receivables: Array<{ project_name: string; client_name: string; amount: number; overdue_days: number; level: string }>
+  pending_alerts: Array<{ title: string; level: string; source: string; due_date: string; status: string }>
+  labor_team_stats: Array<{ team: string; count: number; craft: string }>
 }
 
 export interface ModuleOverview {
@@ -489,4 +495,16 @@ export interface LaborSummary {
   risk_workers: number
   unpaid_amount: string
   by_team: { name: string; value: number }[]
+}
+
+export interface Feedback {
+  id: number
+  tenant_id: number
+  user_id: number
+  title: string
+  description?: string
+  page_url?: string
+  status: string
+  created_at: string
+  updated_at: string
 }

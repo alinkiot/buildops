@@ -4,7 +4,7 @@ from __future__ import annotations
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import alerts, auth, costs, dashboard, documents, exports, files, finance, integrations, labor, projects, qualifications, receivables, system, tenders
+from app.api.routes import alerts, auth, costs, dashboard, documents, exports, feedback, files, finance, integrations, labor, projects, qualifications, receivables, system, tenders
 from app.core.config import settings
 from app.db.session import Base, engine
 from app.schemas.common import ok
@@ -38,6 +38,7 @@ app.include_router(labor.router, prefix=api)
 app.include_router(integrations.router, prefix=api)
 app.include_router(files.router, prefix=api)
 app.include_router(alerts.router, prefix=api)
+app.include_router(feedback.router, prefix=api)
 app.include_router(dashboard.router, prefix=api)
 
 

@@ -168,3 +168,10 @@ class WorkerStatus(str, enum.Enum):
     PENDING = "pending"  # 待入场
     ONSITE = "onsite"    # 在场
     LEFT = "left"        # 离场
+
+
+class FeedbackStatus(str, enum.Enum):
+    PENDING = "pending"        # 待确认
+    PROCESSING = "processing"  # 处理中
+    IGNORED = "ignored"        # 不处理
+    RESOLVED = "resolved"      # 已解决

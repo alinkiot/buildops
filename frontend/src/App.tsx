@@ -18,6 +18,7 @@ import Labor from './pages/Labor'
 import SystemUsers from './pages/SystemUsers'
 import SystemIntegrations from './pages/SystemIntegrations'
 import SystemAudit from './pages/SystemAudit'
+import SystemFeedback from './pages/SystemFeedback'
 
 function RequireAuth({ children }: { children: JSX.Element }) {
   const { user, loading } = useAuth()
@@ -63,6 +64,7 @@ export default function App() {
           <Route path="system/users" element={<SystemUsers />} />
           <Route path="system/integrations" element={<SystemIntegrations />} />
           <Route path="system/audit" element={<SystemAudit />} />
+          <Route path="system/feedback" element={<SystemFeedback />} />
           <Route path="qualifications" element={<Qualifications />} />
           <Route path="documents" element={<Documents />} />
           <Route path="costs" element={<Costs />} />
