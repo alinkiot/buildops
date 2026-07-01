@@ -303,6 +303,152 @@ def dashboard(user: User = Depends(get_current_user), db: Session = Depends(get_
         for st, cnt in status_counter.items()
     ]
 
+    # ---- 新增维度 ----
+    today = date.today()
+
+    # 1. receivable_trend: 近6月回款趋势
+    from collections import defaultdict
+    from datetime import timedelta
+
+    # 查询本租户回款数据（受权限过滤）
+    rec_stmt = select(Receivable).where(Receivable.tenant_id == tid)
+    if auth_ids is not None:
+        rec_stmt = rec_stmt.where(Receivable.project_id.in_(auth_ids or {-1}))
+    recs = db.execute(rec_stmt).scalars().all()
+
+    month_planned: dict[str, float] = defaultdict(float)
+    month_actual: dict[str, float] = defaultdict(float)
+    # 生成近6个月的月份键
+    def _month_offset(base: date, months: int) -> date:
+        """返回 base 往前推 months 个月的同日（溢出则取月末）。"""
+        m = base.month - months
+        y = base.year
+        while m <= 0:
+            m += 12
+            y -= 1
+        from calendar import monthrange
+        d = min(base.day, monthrange(y, m)[1])
+        return date(y, m, d)
+
+    six_months_ago = _month_offset(today, 6)
+    for r in recs:
+        if r.due_date and r.due_date >= six_months_ago:
+            m_key = r.due_date.strftime("%Y-%m")
+            month_planned[m_key] += float(r.amount)
+            month_actual[m_key] += float(r.received_amount)
+    # 连续6个月的结果
+    receivable_trend = []
+    for i in range(5, -1, -1):
+        m_date = _month_offset(today, i)
+        m_key = m_date.strftime("%Y-%m")
+        receivable_trend.append({
+            "month": m_key,
+            "planned": round(month_planned.get(m_key, 0), 2),
+            "actual": round(month_actual.get(m_key, 0), 2),
+        })
+
+    # 2. cost_structure: 成本结构分布（按 category 聚合）
+    exp_stmt = select(Expense).where(
+        Expense.tenant_id == tid,
+        Expense.status.in_(_COST_COUNTED),
+    )
+    if auth_ids is not None:
+        exp_stmt = exp_stmt.where(Expense.project_id.in_(auth_ids or {-1}))
+    expenses_all = db.execute(exp_stmt).scalars().all()
+    cat_map: dict[str, float] = defaultdict(float)
+    for e in expenses_all:
+        cat_name = e.category or "其他"
+        cat_map[cat_name] += float(e.amount)
+    cost_structure = [NameValue(name=k, value=round(v, 2)) for k, v in sorted(cat_map.items(), key=lambda x: -x[1])]
+
+    # 3. contract_top5: 合同额 Top5 项目
+    top5 = sorted(projects, key=lambda p: float(p.contract_amount), reverse=True)[:5]
+    contract_top5 = [
+        {
+            "name": p.name,
+            "contract_amount": float(p.contract_amount),
+            "received_amount": float(p.received_amount),
+        }
+        for p in top5
+    ]
+
+    # 4. overdue_receivables: 逾期回款明细
+    clients_map = {
+        c.id: c.name
+        for c in db.execute(select(ClientUnit).where(ClientUnit.tenant_id == tid)).scalars().all()
+    }
+    project_map = {p.id: p.name for p in projects}
+    overdue_receivables = []
+    for r in recs:
+        if (
+            r.due_date
+            and r.due_date < today
+            and r.status not in (ReceivableStatus.SETTLED, ReceivableStatus.WRITTEN_OFF)
+        ):
+            outstanding = float(r.amount) - float(r.received_amount)
+            if outstanding <= 0:
+                continue
+            od_days = (today - r.due_date).days
+            if od_days > 180:
+                level = "坏账风险"
+            elif od_days > 90:
+                level = "呆滞"
+            elif od_days > 30:
+                level = "关注"
+            else:
+                level = "逾期"
+            overdue_receivables.append({
+                "project_name": project_map.get(r.project_id, "未关联项目"),
+                "client_name": clients_map.get(r.client_id, "未指定甲方"),
+                "amount": round(outstanding, 2),
+                "overdue_days": od_days,
+                "level": level,
+            })
+    overdue_receivables.sort(key=lambda x: -x["overdue_days"])
+
+    # 5. pending_alerts: 近期待办预警（前10条）
+    alert_stmt = (
+        select(Alert)
+        .where(
+            Alert.tenant_id == tid,
+            Alert.status.in_([AlertStatus.PENDING, AlertStatus.PROCESSING, AlertStatus.OVERDUE]),
+        )
+        .order_by(Alert.due_date.asc().nulls_last())
+        .limit(10)
+    )
+    pending_alert_rows = db.execute(alert_stmt).scalars().all()
+    pending_alerts = [
+        {
+            "title": a.title,
+            "level": a.level.value if hasattr(a.level, "value") else str(a.level),
+            "source": _SOURCE_LABELS.get(a.source.value if hasattr(a.source, "value") else a.source, str(a.source)),
+            "due_date": a.due_date.isoformat() if a.due_date else None,
+            "status": a.status.value if hasattr(a.status, "value") else str(a.status),
+        }
+        for a in pending_alert_rows
+    ]
+
+    # 6. labor_team_stats: 劳务分班统计
+    worker_stmt = select(Worker).where(
+        Worker.tenant_id == tid,
+        Worker.status == WorkerStatus.ONSITE,
+    )
+    if auth_ids is not None:
+        worker_stmt = worker_stmt.where(Worker.project_id.in_(auth_ids or {-1}))
+    onsite_workers = db.execute(worker_stmt).scalars().all()
+    team_stats: dict[str, dict] = {}
+    for w in onsite_workers:
+        team_name = w.team or "未分配"
+        if team_name not in team_stats:
+            team_stats[team_name] = {"team": team_name, "count": 0, "crafts": set()}
+        team_stats[team_name]["count"] += 1
+        if w.craft:
+            team_stats[team_name]["crafts"].add(w.craft)
+    labor_team_stats = [
+        {"team": v["team"], "count": v["count"], "craft": "、".join(sorted(v["crafts"]))}
+        for v in sorted(team_stats.values(), key=lambda x: -x["count"])
+    ]
+
     return ok(DashboardData(
         overview=overview,
         project_profit_rank=profit_rank,
@@ -310,4 +456,10 @@ def dashboard(user: User = Depends(get_current_user), db: Session = Depends(get_
         alert_by_level=alert_by_level,
         project_by_status=project_by_status,
         modules=_module_overview(db, tid, auth_ids),
+        receivable_trend=receivable_trend,
+        cost_structure=cost_structure,
+        contract_top5=contract_top5,
+        overdue_receivables=overdue_receivables,
+        pending_alerts=pending_alerts,
+        labor_team_stats=labor_team_stats,
     ))

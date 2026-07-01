@@ -172,6 +172,183 @@ function StatusPie({ data }: { data: { name: string; value: number }[] }) {
   )
 }
 
+/** 回款趋势 SVG 折线/柱状图 */
+function TrendChart({ data }: { data: Array<{ month: string; planned: number; actual: number }> }) {
+  if (!data.length) return <div style={{ color: '#64748b', fontSize: 12 }}>暂无数据</div>
+  const maxVal = Math.max(...data.flatMap((d) => [d.planned, d.actual]), 1)
+  const w = 400, h = 140, px = 40, py = 16
+  const chartW = w - px * 2, chartH = h - py * 2
+  const stepX = chartW / Math.max(data.length - 1, 1)
+
+  const plannedPoints = data.map((d, i) => `${px + i * stepX},${py + chartH - (d.planned / maxVal) * chartH}`)
+  const actualPoints = data.map((d, i) => `${px + i * stepX},${py + chartH - (d.actual / maxVal) * chartH}`)
+
+  return (
+    <div className="screen-trend-chart">
+      <svg viewBox={`0 0 ${w} ${h}`} width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
+        {/* grid lines */}
+        {[0, 0.25, 0.5, 0.75, 1].map((r) => (
+          <line key={r} x1={px} x2={w - px} y1={py + chartH * (1 - r)} y2={py + chartH * (1 - r)}
+            stroke="rgba(148,163,184,0.1)" strokeDasharray="3,3" />
+        ))}
+        {/* planned line */}
+        <polyline points={plannedPoints.join(' ')} fill="none" stroke="#64748b" strokeWidth="1.5" strokeDasharray="4,3" />
+        {/* actual line */}
+        <polyline points={actualPoints.join(' ')} fill="none" stroke="#22d3ee" strokeWidth="2" />
+        {/* actual dots */}
+        {data.map((d, i) => (
+          <circle key={i} cx={px + i * stepX} cy={py + chartH - (d.actual / maxVal) * chartH}
+            r="3" fill="#22d3ee" stroke="#070c1a" strokeWidth="1.5" />
+        ))}
+        {/* x labels */}
+        {data.map((d, i) => (
+          <text key={i} x={px + i * stepX} y={h - 2} textAnchor="middle" fontSize="9" fill="#64748b">{d.month}</text>
+        ))}
+        {/* y labels */}
+        {[0, 0.5, 1].map((r) => (
+          <text key={r} x={px - 6} y={py + chartH * (1 - r) + 3} textAnchor="end" fontSize="8" fill="#64748b">
+            {((maxVal * r) / 10000).toFixed(0)}万
+          </text>
+        ))}
+      </svg>
+      <div className="screen-trend-legend">
+        <span><i style={{ background: '#22d3ee' }} />实际回款</span>
+        <span><i style={{ background: '#64748b' }} />计划回款</span>
+      </div>
+    </div>
+  )
+}
+
+/** 合同额 Top5 水平条形图 */
+function ContractTop5Chart({ data }: { data: Array<{ name: string; contract_amount: number; received_amount: number }> }) {
+  if (!data.length) return <div style={{ color: '#64748b', fontSize: 12 }}>暂无数据</div>
+  const maxVal = Math.max(...data.map((d) => d.contract_amount), 1)
+  return (
+    <div className="screen-bar-chart">
+      {data.map((d, i) => (
+        <div className="screen-bar-row" key={d.name} style={{ animationDelay: `${600 + i * 80}ms` }}>
+          <span className="screen-bar-label">{d.name.length > 8 ? d.name.slice(0, 8) + '…' : d.name}</span>
+          <div className="screen-bar-track" style={{ position: 'relative' }}>
+            <div className="screen-bar-fill" style={{
+              width: `${(d.contract_amount / maxVal) * 100}%`,
+              background: 'linear-gradient(90deg, rgba(59,130,246,0.4), rgba(59,130,246,0.7))',
+              animationDelay: `${800 + i * 80}ms`,
+            }} />
+            <div className="screen-bar-fill" style={{
+              width: `${(d.received_amount / maxVal) * 100}%`,
+              background: 'linear-gradient(90deg, #22d3ee, #06b6d4)',
+              position: 'absolute', top: 0, left: 0, height: '100%',
+              animationDelay: `${900 + i * 80}ms`,
+            }} />
+          </div>
+          <span className="screen-bar-val">{(d.contract_amount / 10000).toFixed(0)}万</span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+/** 成本结构分布饼图 */
+function CostPie({ data }: { data: { name: string; value: number }[] }) {
+  const colors = ['#3b82f6', '#22d3ee', '#8b5cf6', '#f59e0b', '#22c55e', '#f43f5e', '#64748b']
+  const total = data.reduce((s, d) => s + d.value, 0)
+  if (!total) return <div style={{ color: '#64748b', fontSize: 12 }}>暂无数据</div>
+  let cumPercent = 0
+
+  return (
+    <div className="screen-pie-container">
+      <div className="screen-pie-ring">
+        <svg viewBox="0 0 100 100">
+          {data.map((d, i) => {
+            const percent = (d.value / total) * 100
+            const dashArray = `${percent} ${100 - percent}`
+            const dashOffset = -cumPercent
+            cumPercent += percent
+            return (
+              <circle key={d.name} cx="50" cy="50" r="38" fill="none"
+                stroke={colors[i % colors.length]} strokeWidth="10"
+                strokeDasharray={dashArray} strokeDashoffset={dashOffset}
+                style={{ transition: 'all 1.2s ease' }} pathLength="100" />
+            )
+          })}
+        </svg>
+        <div className="screen-pie-center">
+          <span className="screen-pie-total">{(total / 10000).toFixed(0)}</span>
+          <span className="screen-pie-unit">万元</span>
+        </div>
+      </div>
+      <div className="screen-pie-legend">
+        {data.map((d, i) => (
+          <div className="screen-pie-legend-item" key={d.name}>
+            <span className="screen-pie-dot" style={{ background: colors[i % colors.length] }} />
+            <span className="screen-pie-name">{d.name}</span>
+            <span className="screen-pie-val">{(d.value / 10000).toFixed(0)}万</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/** 待办预警滚动列表 */
+function AlertScroll({ alerts }: { alerts: Array<{ title: string; level: string; source: string; due_date: string; status: string }> }) {
+  if (!alerts.length) return <div style={{ color: '#64748b', fontSize: 12 }}>暂无待办预警</div>
+  const levelColors: Record<string, string> = { critical: '#ef4444', high: '#f97316', medium: '#3b82f6', low: '#64748b' }
+  return (
+    <div className="screen-alert-scroll">
+      <div className="screen-alert-scroll__track">
+        {[...alerts, ...alerts].map((a, i) => (
+          <div className="screen-alert-scroll__item" key={i}>
+            <span className="screen-alert-scroll__tag" style={{ background: levelColors[a.level] || '#3b82f6' }}>{a.level}</span>
+            <span className="screen-alert-scroll__title">{a.title}</span>
+            <span className="screen-alert-scroll__date">{a.due_date || '-'}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/** 逾期回款明细表格 */
+function OverdueTable({ data }: { data: Array<{ project_name: string; client_name: string; amount: number; overdue_days: number; level: string }> }) {
+  if (!data.length) return <div style={{ color: '#64748b', fontSize: 12 }}>无逾期回款</div>
+  const levelColors: Record<string, string> = { red: '#ef4444', orange: '#f97316', yellow: '#eab308' }
+  return (
+    <div className="screen-overdue-table">
+      <div className="screen-overdue-table__head">
+        <span>项目名</span><span>甲方</span><span>金额(万)</span><span>逾期天数</span><span>级别</span>
+      </div>
+      <div className="screen-overdue-table__body">
+        {data.map((d, i) => (
+          <div className="screen-overdue-table__row" key={i}>
+            <span>{d.project_name.length > 8 ? d.project_name.slice(0, 8) + '…' : d.project_name}</span>
+            <span>{d.client_name.length > 6 ? d.client_name.slice(0, 6) + '…' : d.client_name}</span>
+            <span>{(d.amount / 10000).toFixed(1)}</span>
+            <span style={{ color: d.overdue_days > 90 ? '#ef4444' : '#f59e0b' }}>{d.overdue_days}天</span>
+            <span className="screen-overdue-table__tag" style={{ background: levelColors[d.level] || '#64748b' }}>{d.level}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/** 劳务分班统计 */
+function TeamGrid({ data }: { data: Array<{ team: string; count: number; craft: string }> }) {
+  if (!data.length) return <div style={{ color: '#64748b', fontSize: 12 }}>暂无数据</div>
+  return (
+    <div className="screen-team-grid">
+      {data.map((t, i) => (
+        <div className="screen-team-grid__item" key={i}>
+          <div className="screen-team-grid__count">{t.count}</div>
+          <div className="screen-team-grid__name">{t.team}</div>
+          <div className="screen-team-grid__craft">{t.craft}</div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export default function DashboardScreen() {
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -281,9 +458,9 @@ export default function DashboardScreen() {
         <KpiCard title="待处理预警" value={ov.pending_alert_count} suffix={`/ ${ov.alert_count}`} icon="🚨" color="#ef4444" delay={400} />
       </section>
 
-      {/* 主内容三栏 */}
+      {/* 主内容三栏（对称布局） */}
       <main className="screen-main">
-        {/* 左列 */}
+        {/* 左列：项目状态 + 核心健康度 */}
         <section className="screen-panel screen-panel--left">
           <div className="screen-card">
             <div className="screen-card__header">
@@ -301,35 +478,42 @@ export default function DashboardScreen() {
               </div>
               <div className="screen-card__body">
                 <div className="screen-health-grid">
-                  <RingProgress
-                    percent={data.modules.qualification.health_score}
-                    color={data.modules.qualification.expired > 0 ? '#ef4444' : '#22d3ee'}
-                    label="资质"
-                  />
-                  <RingProgress
-                    percent={data.modules.document.completeness}
-                    color={data.modules.document.missing > 0 ? '#f97316' : '#22c55e'}
-                    label="资料"
-                  />
-                  <RingProgress
-                    percent={Math.max(0, 100 - Math.abs(data.modules.cost.deviation_rate))}
-                    color={data.modules.cost.deviation_rate > 10 ? '#ef4444' : '#3b82f6'}
-                    label="成本"
-                  />
-                  <RingProgress
-                    percent={data.modules.bid.win_rate}
-                    color="#8b5cf6"
-                    label="中标率"
-                  />
+                  <RingProgress percent={data.modules.qualification.health_score} size={60} strokeWidth={6}
+                    color={data.modules.qualification.expired > 0 ? '#ef4444' : '#22d3ee'} label="资质" />
+                  <RingProgress percent={data.modules.document.completeness} size={60} strokeWidth={6}
+                    color={data.modules.document.missing > 0 ? '#f97316' : '#22c55e'} label="资料" />
+                  <RingProgress percent={Math.max(0, 100 - Math.abs(data.modules.cost.deviation_rate))} size={60} strokeWidth={6}
+                    color={data.modules.cost.deviation_rate > 10 ? '#ef4444' : '#3b82f6'} label="成本" />
+                  <RingProgress percent={data.modules.bid.win_rate} size={60} strokeWidth={6}
+                    color="#8b5cf6" label="中标率" />
                 </div>
               </div>
             </div>
           )}
+
+          <div className="screen-card">
+            <div className="screen-card__header">
+              <span className="screen-card__title">成本结构</span>
+            </div>
+            <div className="screen-card__body">
+              <CostPie data={data.cost_structure || []} />
+            </div>
+          </div>
         </section>
 
-        {/* 中列 */}
+        {/* 中列：回款趋势 + 项目利润排行 */}
         <section className="screen-panel screen-panel--center">
-          <div className="screen-card screen-card--full">
+          <div className="screen-card">
+            <div className="screen-card__header">
+              <span className="screen-card__title">回款趋势</span>
+              <span className="screen-card__badge">近6月 · 计划 vs 实际</span>
+            </div>
+            <div className="screen-card__body">
+              <TrendChart data={data.receivable_trend || []} />
+            </div>
+          </div>
+
+          <div className="screen-card">
             <div className="screen-card__header">
               <span className="screen-card__title">项目利润排行</span>
               <span className="screen-card__badge">回款 - 成本 · TOP {data.project_profit_rank.length}</span>
@@ -346,7 +530,7 @@ export default function DashboardScreen() {
           </div>
         </section>
 
-        {/* 右列 */}
+        {/* 右列：预警等级 + 预警来源 + 待办滚动 */}
         <section className="screen-panel screen-panel--right">
           <div className="screen-card">
             <div className="screen-card__header">
@@ -369,10 +553,8 @@ export default function DashboardScreen() {
                     <span className="screen-source-rank">#{i + 1}</span>
                     <span className="screen-source-name">{s.name}</span>
                     <div className="screen-source-bar">
-                      <div
-                        className="screen-source-fill"
-                        style={{ width: `${(s.value / Math.max(ov.alert_count, 1)) * 100}%` }}
-                      />
+                      <div className="screen-source-fill"
+                        style={{ width: `${(s.value / Math.max(ov.alert_count, 1)) * 100}%` }} />
                     </div>
                     <span className="screen-source-val">{s.value}</span>
                   </div>
@@ -381,45 +563,47 @@ export default function DashboardScreen() {
             </div>
           </div>
 
-          {data.modules && (
-            <div className="screen-card">
-              <div className="screen-card__header">
-                <span className="screen-card__title">经营快报</span>
-              </div>
-              <div className="screen-card__body">
-                <div className="screen-quick-stats">
-                  <div className="screen-stat-item">
-                    <span className="screen-stat-label">财税净利润</span>
-                    <span className="screen-stat-value" style={{ color: '#a78bfa' }}>{fmt(data.modules.finance.net_profit)} 万</span>
-                  </div>
-                  <div className="screen-stat-item">
-                    <span className="screen-stat-label">待回总额</span>
-                    <span className="screen-stat-value" style={{ color: '#fbbf24' }}>{fmt(data.modules.receivable.total_outstanding)} 万</span>
-                  </div>
-                  <div className="screen-stat-item">
-                    <span className="screen-stat-label">超预算项目</span>
-                    <span className="screen-stat-value" style={{ color: '#f87171' }}>{data.modules.cost.over_budget_projects} 个</span>
-                  </div>
-                  <div className="screen-stat-item">
-                    <span className="screen-stat-label">在场工人</span>
-                    <span className="screen-stat-value" style={{ color: '#34d399' }}>{data.modules.labor.onsite} 人</span>
-                  </div>
-                  <div className="screen-stat-item">
-                    <span className="screen-stat-label">保证金未退</span>
-                    <span className="screen-stat-value" style={{ color: '#fb923c' }}>{fmt(data.modules.bid.deposit_outstanding)} 万</span>
-                  </div>
-                  <div className="screen-stat-item">
-                    <span className="screen-stat-label">无票占比</span>
-                    <span className="screen-stat-value" style={{ color: data.modules.finance.no_invoice_ratio > 10 ? '#f87171' : '#94a3b8' }}>
-                      {data.modules.finance.no_invoice_ratio}%
-                    </span>
-                  </div>
-                </div>
-              </div>
+          <div className="screen-card">
+            <div className="screen-card__header">
+              <span className="screen-card__title">待办预警</span>
+              <span className="screen-card__badge">{(data.pending_alerts || []).length} 条待处理</span>
             </div>
-          )}
+            <div className="screen-card__body screen-alert-scroll-wrap">
+              <AlertScroll alerts={data.pending_alerts || []} />
+            </div>
+          </div>
         </section>
       </main>
+
+      {/* 底部横向区域：合同额Top5 + 逾期回款 + 劳务分班 */}
+      <section className="screen-bottom-bar">
+        <div className="screen-card">
+          <div className="screen-card__header">
+            <span className="screen-card__title">合同额 Top5</span>
+          </div>
+          <div className="screen-card__body">
+            <ContractTop5Chart data={data.contract_top5 || []} />
+          </div>
+        </div>
+        <div className="screen-card">
+          <div className="screen-card__header">
+            <span className="screen-card__title">逾期回款</span>
+            <span className="screen-card__badge">{(data.overdue_receivables || []).length} 条</span>
+          </div>
+          <div className="screen-card__body">
+            <OverdueTable data={data.overdue_receivables || []} />
+          </div>
+        </div>
+        <div className="screen-card">
+          <div className="screen-card__header">
+            <span className="screen-card__title">劳务分班</span>
+            <span className="screen-card__badge">{(data.labor_team_stats || []).reduce((s, t) => s + t.count, 0)} 人在场</span>
+          </div>
+          <div className="screen-card__body">
+            <TeamGrid data={data.labor_team_stats || []} />
+          </div>
+        </div>
+      </section>
 
       {/* 底部装饰线 */}
       <div className="screen-footer-line" />
