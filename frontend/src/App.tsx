@@ -4,6 +4,7 @@ import { useAuth } from './auth/AuthContext'
 import MainLayout from './components/MainLayout'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
+import DashboardScreen from './pages/DashboardScreen'
 import Projects from './pages/Projects'
 import Tenders from './pages/Tenders'
 import Files from './pages/Files'
@@ -36,6 +37,14 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route
+          path="/screen"
+          element={
+            <RequireAuth>
+              <DashboardScreen />
+            </RequireAuth>
+          }
+        />
         <Route
           path="/"
           element={

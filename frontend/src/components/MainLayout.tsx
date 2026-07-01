@@ -24,6 +24,7 @@ import {
   VerticalRightOutlined,
   ApiOutlined,
   AuditOutlined,
+  DesktopOutlined,
 } from '@ant-design/icons'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
@@ -318,7 +319,41 @@ export default function MainLayout() {
               ]}
             />
           </div>
-          <Dropdown
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <Tooltip title="经营大屏">
+              <span
+                onClick={() => navigate('/screen')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: 36,
+                  height: 36,
+                  borderRadius: 8,
+                  cursor: 'pointer',
+                  fontSize: 17,
+                  color: '#475569',
+                  background: 'linear-gradient(135deg, rgba(22,104,220,0.08) 0%, rgba(14,165,233,0.08) 100%)',
+                  border: '1px solid rgba(22,104,220,0.12)',
+                  transition: 'all 0.25s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'linear-gradient(135deg, #1668dc 0%, #0ea5e9 100%)'
+                  e.currentTarget.style.color = '#fff'
+                  e.currentTarget.style.borderColor = 'transparent'
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(22,104,220,0.3)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(22,104,220,0.08) 0%, rgba(14,165,233,0.08) 100%)'
+                  e.currentTarget.style.color = '#475569'
+                  e.currentTarget.style.borderColor = 'rgba(22,104,220,0.12)'
+                  e.currentTarget.style.boxShadow = 'none'
+                }}
+              >
+                <DesktopOutlined />
+              </span>
+            </Tooltip>
+            <Dropdown
             menu={{
               items: [
                 { key: 'role', label: <span style={{ fontWeight: 600, color: '#334155', display: 'block', textAlign: 'center' }}>超级管理员</span>, disabled: true },
@@ -342,6 +377,7 @@ export default function MainLayout() {
               <Avatar size={32} style={{ background: brand.gradient }} icon={<UserOutlined />} />
             </span>
           </Dropdown>
+          </div>
         </Header>
         {/* 多页签标签栏 */}
         <div className="layout-tabs" ref={tabsRef}>
