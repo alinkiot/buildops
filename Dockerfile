@@ -5,7 +5,7 @@
 # 纯后端镜像：前端静态资源由部署时挂载到 /app/static 目录提供。
 #
 # 构建：docker build -t buildops:latest .
-# 运行：docker run -d -p 8000:8000 -v /path/to/dist:/app/static -v data:/data buildops:latest
+# 运行：docker run -d -p 8574:8574 -v /path/to/dist:/app/static -v data:/data buildops:latest
 # ============================================================
 FROM python:3.11-slim
 
@@ -42,10 +42,10 @@ RUN useradd -m -u 10001 appuser && chown -R appuser:appuser /app /data
 USER appuser
 
 VOLUME ["/data"]
-EXPOSE 8000
+EXPOSE 8574
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
-    CMD curl -fsS http://localhost:8000/health || exit 1
+    CMD curl -fsS http://localhost:8574/health || exit 1
 
 ENTRYPOINT ["docker-entrypoint.sh"]
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8574"]

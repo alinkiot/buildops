@@ -65,7 +65,7 @@ cd frontend && npm ci && npm run build && cd ..
 docker build -t buildops:latest .
 ```
 
-镜像只含 Python 运行时，`COPY frontend/dist` 作为静态资源由 FastAPI 托管。运行后单镜像同时提供前端页面与 `/api` 接口，访问 http://localhost:8000 ；数据库与上传文件持久化到 `/data` 卷。
+镜像只含 Python 运行时，`COPY frontend/dist` 作为静态资源由 FastAPI 托管。运行后单镜像同时提供前端页面与 `/api` 接口，访问 http://localhost:8574 ；数据库与上传文件持久化到 `/data` 卷。
 
 生产部署请通过环境变量 `APP_SECRET_KEY` 注入强随机密钥。
 
@@ -79,11 +79,11 @@ python3 -m venv .venv
 . .venv/bin/activate          # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 python -m app.seed            # 初始化演示数据（仅首次）
-uvicorn app.main:app --reload --port 8000
+uvicorn app.main:app --reload --port 8574
 ```
 
-- 接口文档：http://localhost:8000/docs
-- 健康检查：http://localhost:8000/health
+- 接口文档：http://localhost:8574/docs
+- 健康检查：http://localhost:8574/health
 
 切换数据库示例：
 
@@ -97,7 +97,7 @@ export APP_DATABASE_URL="postgresql+psycopg://user:pwd@localhost:5432/cmvp"
 ```bash
 cd frontend
 npm install
-npm run dev                   # http://localhost:5173 ，已配置 /api 代理到 :8000
+npm run dev                   # http://localhost:5173 ，已配置 /api 代理到 :8574
 ```
 
 ## 演示账号

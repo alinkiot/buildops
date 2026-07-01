@@ -4,7 +4,7 @@ services:
     image: buildops:latest
     container_name: buildops
     ports:
-      - "8000:8000"
+      - "8574:8574"
     environment:
       APP_SECRET_KEY: "please-change-this-to-a-long-random-secret"
     volumes:
